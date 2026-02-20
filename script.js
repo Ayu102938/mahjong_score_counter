@@ -9,7 +9,10 @@ const yakuData = [
     { name: '断幺九', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
     { name: '平和', han: 1, isMenzenOnly: true, kuisaGari: false, category: '1翻' },
     { name: '一盃口', han: 1, isMenzenOnly: true, kuisaGari: false, category: '1翻' },
-    { name: '役牌（白・發・中・自風・場風）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
+    { name: '役牌（白）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
+    { name: '役牌（發）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
+    { name: '役牌（中）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
+    { name: '役牌（自風・場風）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
     { name: '嶺上開花', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
     { name: '槍槓', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
     { name: '海底摸月・河底撈魚', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
@@ -144,12 +147,17 @@ function updateYakuStatus() {
         }
 
         // Prevent 'Menzen Tsumo' if Ron or Naki
-        if (yaku.name === '門前清自摸和' && (winMethod === 'ron' || isNaki)) {
-            disabled = true;
+        if (yaku.name === '門前清自摸和') {
+            if (winMethod === 'ron' || isNaki) {
+                disabled = true;
+                cb.checked = false; // Ensure it's unchecked if disabled
+            } else {
+                // Auto-check Menzen Tsumo if Tsumo and Menzen (not Naki)
+                cb.checked = true;
+            }
         }
 
         if (disabled) {
-            cb.checked = false;
             cb.disabled = true;
             label.classList.add('disabled-yaku');
         } else {

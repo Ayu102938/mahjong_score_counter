@@ -1,0 +1,9 @@
+Running Mahjong Parser Tests...
+✅ PASS: parseHand: returns empty array for invalid 14 tiles hand
+✅ PASS: parseHand: correctly parses Seven Pairs (Chiitoitsu)
+✅ PASS: parseHand: correctly parses a standard winning hand (4 melds, 1 pair)
+✅ PASS: parseHand: handles hands with multiple interpretations (e.g. 222333444)
+✅ PASS: parseHand: handles 1 Kan (15 tiles hand)
+✅ PASS: parseHand: handles 4 Kans (Suukantsu, 18 tiles hand)
+
+Test Summary: 6 passed, 0 failed

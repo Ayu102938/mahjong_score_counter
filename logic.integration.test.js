@@ -53,6 +53,39 @@ function runTests() {
         assert.strictEqual(result.han, 3);
     });
 
+    test('evaluateHand: 1 Kan, Menzen Tsumo', () => {
+        // 1 Kan (4 same tiles) + 3 Shuntsu + 1 Pair = 15 tiles
+        const hand = ['m1', 'm1', 'm1', 'm1', 'p2', 'p3', 'p4', 's5', 's6', 's7', 's7', 's8', 's9', 'z1', 'z1'];
+        // Even without `kans` payload, the math fallback works (Ankan implicitly assumed if menzen)
+        const options = { isTsumo: true, isNaki: false, doraCount: 0, isRyamen: true };
+        const result = evaluateHand(hand, 's7', options, false);
+
+        assert.notStrictEqual(result, null);
+        assert.strictEqual(result.yakuList.some(y => y.name === '門前清自摸和'), true);
+        assert.strictEqual(result.bestCombo.some(m => m.type === 'kantsu'), true);
+    });
+
+    test('evaluateHand: 1 Minkan breaks Menzen and triggers KuisaGari', () => {
+        // 1 Kan (m1), and Three Color Straight (2-3-4 in m, p, s), and a pair of z1
+        const hand = ['m1', 'm1', 'm1', 'm1', 'm2', 'm3', 'm4', 'p2', 'p3', 'p4', 's2', 's3', 's4', 'z1', 'z1'];
+        // Explicitly declaring 'm1' as an OPEN kan (Minkan)
+        const options = {
+            isTsumo: true,
+            isNaki: false, // User didn't click checkbox, but kan is open
+            kans: [{ id: 'm1', type: 'minkan' }],
+            doraCount: 0,
+            isRyamen: true
+        };
+        const result = evaluateHand(hand, 's4', options, false);
+
+        assert.notStrictEqual(result, null);
+        // Menzen Tsumo should NOT be present because minkan breaks menzen
+        assert.strictEqual(result.yakuList.some(y => y.name === '門前清自摸和'), false);
+        // Sanshoku Doujun should be present, and it's 1 han due to KuisaGari
+        assert.strictEqual(result.yakuList.some(y => y.name === '三色同順'), true);
+        assert.strictEqual(result.han, 1);
+    });
+
     console.log(`\nTest Summary: ${passed} passed, ${failed} failed`);
     if (failed > 0) process.exit(1);
 }

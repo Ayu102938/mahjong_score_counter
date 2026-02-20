@@ -141,6 +141,30 @@ function runTests() {
         assert.strictEqual(resChinitsu.some(y => y.name === '混一色'), false);
     });
 
+    test('evaluateYaku: Sankantsu (Three Kans) and Suukantsu (Four Kans)', () => {
+        const sankantsuCombo = [
+            { type: 'kantsu', tiles: ['m1', 'm1', 'm1', 'm1'] },
+            { type: 'kantsu', tiles: ['m2', 'm2', 'm2', 'm2'] },
+            { type: 'kantsu', tiles: ['m3', 'm3', 'm3', 'm3'] },
+            { type: 'shuntsu', tiles: ['p4', 'p5', 'p6'] },
+            { type: 'toitsu', tiles: ['s9', 's9'] }
+        ];
+        const resSankantsu = evaluateYaku(sankantsuCombo, 'p6', { isTsumo: true, isNaki: false });
+        assert.strictEqual(resSankantsu.some(y => y.name === '三槓子'), true);
+        assert.strictEqual(resSankantsu.some(y => y.name === '四槓子'), false);
+
+        const suukantsuCombo = [
+            { type: 'kantsu', tiles: ['s1', 's1', 's1', 's1'] },
+            { type: 'kantsu', tiles: ['p2', 'p2', 'p2', 'p2'] },
+            { type: 'kantsu', tiles: ['z3', 'z3', 'z3', 'z3'] },
+            { type: 'kantsu', tiles: ['m4', 'm4', 'm4', 'm4'] },
+            { type: 'toitsu', tiles: ['z7', 'z7'] }
+        ];
+        const resSuukantsu = evaluateYaku(suukantsuCombo, 'z7', { isTsumo: true, isNaki: false });
+        assert.strictEqual(resSuukantsu.some(y => y.name === '四槓子'), true);
+        assert.strictEqual(resSuukantsu.some(y => y.name === '三槓子'), false);
+    });
+
     console.log(`\nTest Summary: ${passed} passed, ${failed} failed`);
     if (failed > 0) process.exit(1);
 }

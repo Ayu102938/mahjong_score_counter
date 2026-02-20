@@ -299,6 +299,28 @@ h1 {
     gap: 0.4rem;
 }
 
+.hand-slot.filled {
+    border: none;
+    background: transparent;
+}
+
+/* Kan Groups */
+.kan-group {
+    display: flex;
+    gap: 2px;
+    padding: 4px;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid var(--accent-gold);
+    border-radius: 6px;
+    margin-right: 4px;
+    align-items: center;
+}
+
+.kan-group:last-child {
+    margin-right: 0;
+}
+
+/* Base Tile Styling */
 .tile {
     width: 38px;
     height: 54px;
@@ -318,6 +340,12 @@ h1 {
     border-bottom: 4px solid #cbd5e1;
     border-right: 2px solid #e2e8f0;
     line-height: 1.1;
+}
+
+.tile.face-down {
+    background: linear-gradient(135deg, #1fa2ff 0%, #12d8fa 50%, #a6ffcb 100%);
+    color: transparent;
+    border: 1px solid #00bcd4;
 }
 
 .tile:hover {

@@ -69,6 +69,43 @@ function runTests() {
         assert.strictEqual(hasShuntsuInterp, true, 'Should find Shuntsu interpretation');
     });
 
+    test('parseHand: handles 1 Kan (15 tiles hand)', () => {
+        // 1 Kan (4 same tiles) + 3 Shuntsu + 1 Pair
+        const hand = ['m1', 'm1', 'm1', 'm1', 'p2', 'p3', 'p4', 's5', 's6', 's7', 's7', 's8', 's9', 'z1', 'z1'];
+        const results = parseHand(hand);
+
+        // It must find at least one valid combination
+        assert.strictEqual(results.length > 0, true);
+
+        // Can we find the Kantsu interpretation?
+        const expectedCombo = results.find(combo =>
+            combo.length === 5 &&
+            combo.filter(m => m.type === 'kantsu').length === 1 &&
+            combo.filter(m => m.type === 'shuntsu').length === 3 &&
+            combo.filter(m => m.type === 'toitsu').length === 1
+        );
+        assert.notStrictEqual(expectedCombo, undefined, 'Should find 1 Kantsu interpretation');
+    });
+
+    test('parseHand: handles 4 Kans (Suukantsu, 18 tiles hand)', () => {
+        const hand = [
+            'm1', 'm1', 'm1', 'm1',
+            'p2', 'p2', 'p2', 'p2',
+            'p9', 'p9', 'p9', 'p9',
+            'z1', 'z1', 'z1', 'z1',
+            'z7', 'z7'
+        ];
+        const results = parseHand(hand);
+        assert.strictEqual(results.length > 0, true);
+
+        const expectedCombo = results.find(combo =>
+            combo.length === 5 &&
+            combo.filter(m => m.type === 'kantsu').length === 4 &&
+            combo.filter(m => m.type === 'toitsu').length === 1
+        );
+        assert.notStrictEqual(expectedCombo, undefined, 'Should find 4 Kantsu interpretation');
+    });
+
     console.log(`\nTest Summary: ${passed} passed, ${failed} failed`);
     if (failed > 0) process.exit(1);
 }

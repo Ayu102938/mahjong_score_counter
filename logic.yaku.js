@@ -10,8 +10,12 @@
 function evaluateYaku(combination, winTile, options) {
     const yakuList = [];
 
+    // Evaluate effective Menzen state
+    const hasMinkan = combination.some(m => m.kanType === 'minkan');
+    const isMenzen = !options.isNaki && !hasMinkan;
+
     // Basic Menzen Tsumo
-    if (options.isTsumo && !options.isNaki) {
+    if (options.isTsumo && isMenzen) {
         yakuList.push({ name: '門前清自摸和', han: 1, isMenzenOnly: true, kuisaGari: false });
     }
 
@@ -36,7 +40,7 @@ function evaluateYaku(combination, winTile, options) {
 
     // Pinfu
     // Conditions: Menzen, 4 Shuntsu, Pair is NOT value tile (yakuhai), wait is Ryamen.
-    if (!options.isNaki && !isChiitoitsu) {
+    if (isMenzen && !isChiitoitsu) {
         const shuntsuCount = combination.filter(m => m.type === 'shuntsu').length;
         const pairMeld = combination.find(m => m.type === 'toitsu');
 
@@ -142,6 +146,14 @@ function evaluateYaku(combination, winTile, options) {
         } else {
             yakuList.push({ name: '清一色', han: 6, isMenzenOnly: false, kuisaGari: true });
         }
+    }
+
+    // Kantsu counts
+    const kantsuCount = combination.filter(m => m.type === 'kantsu').length;
+    if (kantsuCount === 3) {
+        yakuList.push({ name: '三槓子', han: 2, isMenzenOnly: false, kuisaGari: false });
+    } else if (kantsuCount === 4) {
+        yakuList.push({ name: '四槓子', han: 13, isMenzenOnly: false, kuisaGari: false }); // treated as yakuman
     }
 
     return yakuList;

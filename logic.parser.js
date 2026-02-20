@@ -1,23 +1,40 @@
 // logic.parser.js - Mahjong Hand Parser
 
-/**
- * Parses a 14-tile hand array and returns all valid combinations of Melds (Sets) and a Pair.
- * A returned combination array contains standard objects: { type: 'shuntsu'|'koutsu'|'toitsu', tiles: string[] }
- * @param {string[]} handTiles Array of 14 tiles (e.g., ['m1', 'm2', 'm3', ...])
- * @returns {Array<Array<{type: string, tiles: string[]}>>} Array of possible valid hand structures
- */
-function parseHand(handTiles) {
-    if (handTiles.length !== 14) return [];
+function normalizeTile(t) {
+    if (t.length === 2 && ['m', 'p', 's', 'z'].includes(t[1])) {
+        return t[1] + t[0];
+    }
+    return t;
+}
 
+/**
+ * Parses a 14-18 tile hand array and returns all valid combinations of Melds (Sets) and a Pair.
+ * @param {string[]} handTiles Array of tiles (e.g., ['m1', 'm2', 'm3', ...] or ['1m', '2m', ...])
+ * @param {Array<{id: string, type: string}>} kans Array of declared kans (e.g., [{id: '1m', type: 'ankan'}])
+ * @returns {Array<Array<{type: string, kanType?: string, tiles: string[]}>>}
+ */
+function parseHand(handTiles, kans = []) {
+    if (handTiles.length < 14 || handTiles.length > 18) return [];
+
+    const normHand = handTiles.map(normalizeTile);
     const tileCounts = {};
-    for (const tile of handTiles) {
+    for (const tile of normHand) {
         tileCounts[tile] = (tileCounts[tile] || 0) + 1;
     }
 
-    const uniqueTiles = Object.keys(tileCounts);
+    const declaredKantsu = [];
+    for (const kan of kans) {
+        let kanTile = normalizeTile(kan.id);
+        if (tileCounts[kanTile] >= 4) {
+            tileCounts[kanTile] -= 4;
+            declaredKantsu.push({ type: 'kantsu', kanType: kan.type, tiles: [kanTile, kanTile, kanTile, kanTile] });
+        }
+    }
+
+    const uniqueTiles = Object.keys(tileCounts).filter(t => tileCounts[t] > 0);
     const results = [];
 
-    // Check for Seven Pairs (Chiitoitsu)
+    // Chiitoitsu (Seven Pairs) - only valid for 14 tile un-kanned hands mathematically but explicitly checked
     let isChiitoitsu = true;
     for (const tile of uniqueTiles) {
         if (tileCounts[tile] !== 2) {
@@ -26,7 +43,7 @@ function parseHand(handTiles) {
         }
     }
 
-    if (uniqueTiles.length === 7 && isChiitoitsu) {
+    if (normHand.length === 14 && uniqueTiles.length === 7 && isChiitoitsu && kans.length === 0) {
         const chiitoitsuMeld = uniqueTiles.map(tile => ({
             type: 'toitsu',
             tiles: [tile, tile]
@@ -34,14 +51,10 @@ function parseHand(handTiles) {
         results.push(chiitoitsuMeld);
     }
 
-    // Check for standard hand (4 melds + 1 pair)
-    // Convert counts to an array format suitable for easily extracting melds
-    // Tiles are assumed to be 2 chars: suit + rank (e.g. m1, p9, z3)
-
     const suits = ['m', 'p', 's', 'z'];
     const ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-    // Helper: Build a consistent array of available tiles count [suit][rank]
+    // Build available tiles count
     const tileMap = { m: [], p: [], s: [], z: [] };
     for (let s of suits) {
         for (let r = 1; r <= 9; r++) {
@@ -57,9 +70,17 @@ function parseHand(handTiles) {
         return null;
     }
 
-    function addToitsu(s, r) {
-        tileMap[s][r] += 2;
+    function addToitsu(s, r) { tileMap[s][r] += 2; }
+
+    function removeKantsu(s, r) {
+        if (tileMap[s][r] >= 4) {
+            tileMap[s][r] -= 4;
+            return { type: 'kantsu', kanType: 'ankan', tiles: [s + r, s + r, s + r, s + r] };
+        }
+        return null;
     }
+
+    function addKantsu(s, r) { tileMap[s][r] += 4; }
 
     function removeKoutsu(s, r) {
         if (tileMap[s][r] >= 3) {
@@ -69,9 +90,7 @@ function parseHand(handTiles) {
         return null;
     }
 
-    function addKoutsu(s, r) {
-        tileMap[s][r] += 3;
-    }
+    function addKoutsu(s, r) { tileMap[s][r] += 3; }
 
     function removeShuntsu(s, r) {
         if (s !== 'z' && r <= 7 && tileMap[s][r] >= 1 && tileMap[s][r + 1] >= 1 && tileMap[s][r + 2] >= 1) {
@@ -89,29 +108,21 @@ function parseHand(handTiles) {
         tileMap[s][r + 2]++;
     }
 
-    // Backtracking function to find all sets of melds
     function findMelds(meldCount, currentCombo) {
         if (meldCount === 4) {
-            // Found a valid 4-meld + 1-pair combo
-            results.push([...currentCombo]);
+            let tilesUsed = 0;
+            for (const item of currentCombo) {
+                tilesUsed += item.tiles.length;
+            }
+            if (tilesUsed === normHand.length) {
+                results.push([...currentCombo]);
+            }
             return;
         }
 
-        // Search for the next available tile to form a meld
         for (let s of suits) {
             for (let r = 1; r <= 9; r++) {
                 if (tileMap[s][r] > 0) {
-
-                    // Try Koutsu
-                    const koutsu = removeKoutsu(s, r);
-                    if (koutsu) {
-                        currentCombo.push(koutsu);
-                        findMelds(meldCount + 1, currentCombo);
-                        currentCombo.pop();
-                        addKoutsu(s, r);
-                    }
-
-                    // Try Shuntsu
                     const shuntsu = removeShuntsu(s, r);
                     if (shuntsu) {
                         currentCombo.push(shuntsu);
@@ -120,8 +131,22 @@ function parseHand(handTiles) {
                         addShuntsu(s, r);
                     }
 
-                    // Once we find the first tile, we MUST use it in a meld, otherwise this path is invalid.
-                    // Returning here ensures we don't skip over remaining tiles.
+                    const koutsu = removeKoutsu(s, r);
+                    if (koutsu) {
+                        currentCombo.push(koutsu);
+                        findMelds(meldCount + 1, currentCombo);
+                        currentCombo.pop();
+                        addKoutsu(s, r);
+                    }
+
+                    const kantsu = removeKantsu(s, r);
+                    if (kantsu) {
+                        currentCombo.push(kantsu);
+                        findMelds(meldCount + 1, currentCombo);
+                        currentCombo.pop();
+                        addKantsu(s, r);
+                    }
+
                     return;
                 }
             }
@@ -133,8 +158,7 @@ function parseHand(handTiles) {
         for (let r = 1; r <= 9; r++) {
             const toitsu = removeToitsu(s, r);
             if (toitsu) {
-                // If pair removed, search for 4 melds
-                findMelds(0, [toitsu]);
+                findMelds(declaredKantsu.length, [toitsu, ...declaredKantsu]);
                 addToitsu(s, r);
             }
         }

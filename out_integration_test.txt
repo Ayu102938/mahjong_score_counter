@@ -1,0 +1,8 @@
+Running Mahjong Integration Tests...
+✅ PASS: evaluateHand: Simple Tanyao Hand (Child Ron)
+✅ PASS: evaluateHand: Pinfu Tsumo (Child)
+✅ PASS: evaluateHand: Mangan (5 Han with Riichi, Ippatsu, etc. via options)
+✅ PASS: evaluateHand: 1 Kan, Menzen Tsumo
+✅ PASS: evaluateHand: 1 Minkan breaks Menzen and triggers KuisaGari
+
+Test Summary: 5 passed, 0 failed

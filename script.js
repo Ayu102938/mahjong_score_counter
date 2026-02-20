@@ -19,8 +19,9 @@ const SUIT_CHARS = {
     'm': '萬', 'p': '筒', 's': '索', 'z': ''
 };
 
-const MAX_HAND_SIZE = 14;
-let currentHand = []; // Array of tile IDs (e.g. ['1m', '2p', '1z'])
+const MAX_BASE_HAND_SIZE = 14;
+let currentHand = []; // Array of tile objects: { id: '1m', isKan: false, kanType: null }
+let kanCount = 0; // Number of kans in hand
 
 document.addEventListener('DOMContentLoaded', () => {
     initHandBuilderUI();
@@ -64,69 +65,128 @@ function createTileElement(tileId, suitName) {
 }
 
 function addTileToHand(tileId) {
-    // A specific identical tile can only exist 4 times in mahjong
-    const countInHand = currentHand.filter(t => t === tileId).length;
-    if (countInHand >= 4) {
+    const tilesOfSameId = currentHand.filter(t => t.id === tileId);
+    if (tilesOfSameId.length >= 4) {
         alert("同じ牌は4枚までしか選べません。");
         return;
     }
 
-    if (currentHand.length < MAX_HAND_SIZE) {
-        currentHand.push(tileId);
-        // Sort hand for better UX: Manzu -> Pinzu -> Souzu -> Jihai, then by number
-        currentHand.sort((a, b) => {
-            const suitOrder = { 'm': 1, 'p': 2, 's': 3, 'z': 4 };
-            const orderA = suitOrder[a[1]] * 100 + parseInt(a[0]);
-            const orderB = suitOrder[b[1]] * 100 + parseInt(b[0]);
-            return orderA - orderB;
-        });
+    const currentMaxHandSize = MAX_BASE_HAND_SIZE + kanCount;
+
+    if (currentHand.length < currentMaxHandSize) {
+        currentHand.push({ id: tileId, isKan: false, kanType: null });
+        sortHand();
         updateHandDisplay();
+
+        setTimeout(() => checkAndPromptKan(tileId), 50);
     } else {
-        alert("手牌は最大14枚までです。");
+        alert(`現在の手牌は最大${currentMaxHandSize}枚までです。`);
+    }
+}
+
+function sortHand() {
+    currentHand.sort((a, b) => {
+        const suitOrder = { 'm': 1, 'p': 2, 's': 3, 'z': 4 };
+        const orderA = suitOrder[a.id[1]] * 100 + parseInt(a.id[0]);
+        const orderB = suitOrder[b.id[1]] * 100 + parseInt(b.id[0]);
+        return orderA - orderB;
+    });
+}
+
+function checkAndPromptKan(tileId) {
+    const tilesOfSameId = currentHand.filter(t => t.id === tileId);
+    if (tilesOfSameId.length === 4 && !tilesOfSameId[0].isKan) {
+        const confirmKan = confirm(`「${TILE_SYMBOLS[tileId]}」が4枚揃いました。カン（槓）扱いにしますか？\nOK: 暗槓/明槓にする\nキャンセル: カンしない（そのまま4枚持ち）`);
+        if (confirmKan) {
+            const isAnkan = confirm(`暗槓（アンカン）ですか？\nOK: 暗槓\nキャンセル: 明槓（ミンカン）`);
+
+            // Mark all 4 as Kan part
+            currentHand.forEach(t => {
+                if (t.id === tileId) {
+                    t.isKan = true;
+                    t.kanType = isAnkan ? 'ankan' : 'minkan';
+                }
+            });
+            kanCount++;
+            updateHandDisplay();
+        }
     }
 }
 
 function removeTileFromHand(index) {
+    const tileToRemove = currentHand[index];
+
+    if (tileToRemove.isKan) {
+        kanCount--;
+        currentHand.forEach(t => {
+            if (t.id === tileToRemove.id && t.isKan) {
+                t.isKan = false;
+                t.kanType = null;
+            }
+        });
+    }
+
     currentHand.splice(index, 1);
     updateHandDisplay();
 }
 
 function updateHandDisplay() {
     const handContainer = document.getElementById('hand-container');
-    const handCount = document.getElementById('hand-count');
+    const handCountEl = document.getElementById('hand-count');
 
     handContainer.innerHTML = '';
 
-    // Render current tiles
-    currentHand.forEach((tileId, index) => {
+    let prevKanGroup = null;
+    let kanGroupDiv = null;
+
+    currentHand.forEach((tileObj, index) => {
+        const tileId = tileObj.id;
         const suitType = tileId.charAt(1);
         const suitName = suitType === 'm' ? 'manzu' : suitType === 'p' ? 'pinzu' : suitType === 's' ? 'souzu' : 'jihai';
 
-        const slotEl = document.createElement('div');
-        slotEl.className = 'hand-slot filled';
-
         const tileEl = createTileElement(tileId, suitName);
-        // Click to remove
         tileEl.addEventListener('click', () => removeTileFromHand(index));
 
-        slotEl.appendChild(tileEl);
-        handContainer.appendChild(slotEl);
+        if (tileObj.isKan) {
+            if (prevKanGroup !== tileId) {
+                kanGroupDiv = document.createElement('div');
+                kanGroupDiv.className = `kan-group ${tileObj.kanType}`;
+                handContainer.appendChild(kanGroupDiv);
+                prevKanGroup = tileId;
+            }
+
+            if (tileObj.kanType === 'ankan' && (kanGroupDiv.childNodes.length === 0 || kanGroupDiv.childNodes.length === 3)) {
+                tileEl.innerHTML = '';
+                tileEl.classList.add('face-down');
+                tileEl.className = 'tile face-down';
+            }
+
+            kanGroupDiv.appendChild(tileEl);
+        } else {
+            prevKanGroup = null;
+            const slotEl = document.createElement('div');
+            slotEl.className = 'hand-slot filled';
+            slotEl.appendChild(tileEl);
+            handContainer.appendChild(slotEl);
+        }
     });
 
-    // Render empty slots
-    const emptySlots = MAX_HAND_SIZE - currentHand.length;
+    const currentMaxHandSize = MAX_BASE_HAND_SIZE + kanCount;
+    const maxVisibleSlots = MAX_BASE_HAND_SIZE + kanCount;
+
+    const emptySlots = maxVisibleSlots - currentHand.length;
     for (let i = 0; i < emptySlots; i++) {
         const slotEl = document.createElement('div');
         slotEl.className = 'hand-slot';
         handContainer.appendChild(slotEl);
     }
 
-    handCount.textContent = `${currentHand.length} / ${MAX_HAND_SIZE}`;
+    handCountEl.textContent = `${currentHand.length} / ${currentMaxHandSize}`;
 
-    if (currentHand.length === MAX_HAND_SIZE) {
-        handCount.style.color = 'var(--accent-color)';
+    if (currentHand.length === currentMaxHandSize) {
+        handCountEl.style.color = 'var(--accent-color)';
     } else {
-        handCount.style.color = 'var(--accent-gold)';
+        handCountEl.style.color = 'var(--accent-gold)';
     }
 }
 
@@ -139,6 +199,7 @@ function attachEventListeners() {
 
     clearBtn.addEventListener('click', () => {
         currentHand = [];
+        kanCount = 0;
         updateHandDisplay();
     });
 
@@ -161,15 +222,24 @@ function performCalculation() {
     const isNaki = document.getElementById('naki-toggle').checked;
     const doraCount = parseInt(document.getElementById('dora-count').value);
 
-    if (currentHand.length !== 14) {
-        alert("手牌を14枚（和了牌含む）完成させてください。");
+    const currentMaxHandSize = MAX_BASE_HAND_SIZE + kanCount;
+
+    if (currentHand.length !== currentMaxHandSize) {
+        alert(`手牌を${currentMaxHandSize}枚（和了牌含む）完成させてください。`);
         return;
     }
 
-    // Call logic.js to determine yaku and score
-    // Prepare payload
+    const handStrArray = currentHand.map(t => t.id);
+    const kans = currentHand.filter(t => t.isKan).reduce((acc, curr) => {
+        if (!acc.some(k => k.id === curr.id)) {
+            acc.push({ id: curr.id, type: curr.kanType });
+        }
+        return acc;
+    }, []);
+
     const payload = {
-        hand: currentHand,
+        hand: handStrArray,
+        kans: kans,
         isOya: isOya,
         isTsumo: isTsumo,
         isNaki: isNaki,
@@ -182,7 +252,6 @@ function performCalculation() {
             displayResult(result, isOya, isTsumo);
         } else {
             console.error("calculateMahjongScore function not found in logic.js");
-            // Fallback display if logic.js is not fully implemented yet
             displayResult({
                 han: 0,
                 fu: 0,

@@ -20,14 +20,38 @@
  */
 function calculateMahjongScore(payload) {
     console.log("Called calculateMahjongScore with payload:", payload);
-    // TODO: The logic agent will implement the complex yaku parsing here.
 
-    // Return dummy response for now
+    // Convert to the options format evaluateHand expects
+    const options = {
+        isTsumo: payload.isTsumo,
+        isNaki: payload.isNaki,
+        doraCount: payload.doraCount,
+        kans: payload.kans || [],
+        // Assuming some defaults for features not yet in UI
+        isRyamen: true,
+        oyaKaze: '東',
+        jikaze: payload.isOya ? '東' : '南'
+    };
+
+    // The winning tile is generally the last tile added, or we can just pick the last tile in the hand array
+    const winTile = payload.hand[payload.hand.length - 1];
+
+    const result = evaluateHand(payload.hand, winTile, options, payload.isOya);
+
+    if (!result) {
+        return {
+            han: 0,
+            fu: 0,
+            score: { main: 0, additional: 0 },
+            yaku: []
+        };
+    }
+
     return {
-        han: 0,
-        fu: 0,
-        score: { main: 0, additional: 0 },
-        yaku: []
+        han: result.han,
+        fu: result.fu,
+        score: result.highestScore,
+        yaku: result.yakuList.map(y => y.name)
     };
 }
 
@@ -36,10 +60,6 @@ function calculateMahjongScore(payload) {
 // -------------------------------------------------------------
 const parser = require('./logic.parser');
 const yakuEngine = require('./logic.yaku');
-
-// Dummy functions for now, will be properly implemented or imported later
-// Dummy functions for calculating scores are restored to the robust versions built earlier.
-// I will just use evaluateHand to construct yakuList and let calculateHan and calculateScore handle it.
 
 function calculateHan(yakuDataList, isNaki, doraCount) {
     let totalHan = 0;
@@ -61,7 +81,6 @@ function calculateFu(yakuDataList, isNaki, isTsumo) {
 }
 
 function calculateScore(isOya, isTsumo, han, fu) {
-    // Re-implementing the real score logic according to specification.md
     let isFixed = false;
     let baseRef = 0;
 
@@ -70,11 +89,10 @@ function calculateScore(isOya, isTsumo, han, fu) {
     else if (han >= 8) { isFixed = true; baseRef = 4000; } // 倍満
     else if (han >= 6) { isFixed = true; baseRef = 3000; } // 跳満
     else if (han >= 5 || (han === 4 && fu >= 30) || (han === 3 && fu >= 60)) {
-        isFixed = true; baseRef = 2000; // 満貫 (including 4 han 30 fu or 3 han 60 fu)
+        isFixed = true; baseRef = 2000; // 満貫
     }
 
     if (!isFixed) {
-        // Basic calculation
         baseRef = fu * Math.pow(2, 2 + han);
     }
 
@@ -99,36 +117,38 @@ function calculateScore(isOya, isTsumo, han, fu) {
     return { main, additional };
 }
 
-
 /**
- * Automagically parses a 14 tile hand and evaluates the maximum possible score.
- * @param {string[]} handTiles e.g., ['m1', 'm2', 'm3', ...] (must be 14 tiles including winTile)
- * @param {string} winTile e.g., 'm1'
- * @param {Object} options Options like {isTsumo, isNaki, oyaKaze, jikaze, doraCount, isRyamen, etc.}
- * @param {boolean} isOya True if dealer
- * @returns {Object} { highestScore, bestCombo, yakuList, han, fu }
+ * Automagically parses a hand and evaluates the maximum possible score.
+ * @param {string[]} handTiles 
+ * @param {string} winTile 
+ * @param {Object} options 
+ * @param {boolean} isOya 
+ * @returns {Object} 
  */
 function evaluateHand(handTiles, winTile, options, isOya) {
-    const validCombos = parser.parseHand(handTiles);
+    const validCombos = parser.parseHand(handTiles, options.kans || []);
     if (!validCombos || validCombos.length === 0) {
-        return null; // Invalid hand
+        return null;
     }
 
     let bestResult = null;
     let maxMainScore = -1;
 
     for (const combo of validCombos) {
+        // Find effective menzen state for this combo
+        const hasMinkan = combo.some(m => m.kanType === 'minkan');
+        const effectiveNaki = options.isNaki || hasMinkan;
+
         const yakuList = yakuEngine.evaluateYaku(combo, winTile, options);
 
-        // Add external context Yaku from options
-        if (options.isRiichi && !options.isNaki) yakuList.push({ name: 'リーチ', han: 1, isMenzenOnly: true, kuisaGari: false });
-        if (options.isIppatsu && !options.isNaki) yakuList.push({ name: '一発', han: 1, isMenzenOnly: true, kuisaGari: false });
-        if (options.isDoubleRiichi && !options.isNaki) yakuList.push({ name: 'ダブルリーチ', han: 2, isMenzenOnly: true, kuisaGari: false });
+        if (options.isRiichi && !effectiveNaki) yakuList.push({ name: 'リーチ', han: 1, isMenzenOnly: true, kuisaGari: false });
+        if (options.isIppatsu && !effectiveNaki) yakuList.push({ name: '一発', han: 1, isMenzenOnly: true, kuisaGari: false });
+        if (options.isDoubleRiichi && !effectiveNaki) yakuList.push({ name: 'ダブルリーチ', han: 2, isMenzenOnly: true, kuisaGari: false });
 
-        let han = calculateHan(yakuList, options.isNaki, options.doraCount || 0);
+        let han = calculateHan(yakuList, effectiveNaki, options.doraCount || 0);
 
         if (han > 0) {
-            const actualFu = calculateFu(yakuList, options.isNaki, options.isTsumo); // uses real logic func
+            const actualFu = calculateFu(yakuList, effectiveNaki, options.isTsumo);
 
             const score = calculateScore(isOya, options.isTsumo, han, actualFu);
 

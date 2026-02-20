@@ -213,6 +213,26 @@ function attachEventListeners() {
         if (val < 13) doraCount.value = val + 1;
     });
 
+    const nakiToggle = document.getElementById('naki-toggle');
+    const optRiichi = document.getElementById('opt-riichi');
+    const optIppatsu = document.getElementById('opt-ippatsu');
+    const optDoubleRiichi = document.getElementById('opt-double-riichi');
+
+    nakiToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            optRiichi.checked = false;
+            optIppatsu.checked = false;
+            optDoubleRiichi.checked = false;
+            optRiichi.disabled = true;
+            optIppatsu.disabled = true;
+            optDoubleRiichi.disabled = true;
+        } else {
+            optRiichi.disabled = false;
+            optIppatsu.disabled = false;
+            optDoubleRiichi.disabled = false;
+        }
+    });
+
     btnCalculate.addEventListener('click', performCalculation);
 }
 
@@ -221,6 +241,9 @@ function performCalculation() {
     const isTsumo = document.getElementById('win-tsumo').checked;
     const isNaki = document.getElementById('naki-toggle').checked;
     const doraCount = parseInt(document.getElementById('dora-count').value);
+    const isRiichi = document.getElementById('opt-riichi').checked;
+    const isIppatsu = document.getElementById('opt-ippatsu').checked;
+    const isDoubleRiichi = document.getElementById('opt-double-riichi').checked;
 
     const currentMaxHandSize = MAX_BASE_HAND_SIZE + kanCount;
 
@@ -243,7 +266,10 @@ function performCalculation() {
         isOya: isOya,
         isTsumo: isTsumo,
         isNaki: isNaki,
-        doraCount: doraCount
+        doraCount: doraCount,
+        isRiichi: isRiichi,
+        isIppatsu: isIppatsu,
+        isDoubleRiichi: isDoubleRiichi
     };
 
     try {

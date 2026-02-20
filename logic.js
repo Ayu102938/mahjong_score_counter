@@ -21,12 +21,14 @@
 function calculateMahjongScore(payload) {
     console.log("Called calculateMahjongScore with payload:", payload);
 
-    // Convert to the options format evaluateHand expects
     const options = {
         isTsumo: payload.isTsumo,
         isNaki: payload.isNaki,
         doraCount: payload.doraCount,
         kans: payload.kans || [],
+        isRiichi: payload.isRiichi || false,
+        isIppatsu: payload.isIppatsu || false,
+        isDoubleRiichi: payload.isDoubleRiichi || false,
         // Assuming some defaults for features not yet in UI
         isRyamen: true,
         oyaKaze: '東',

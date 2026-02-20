@@ -7,6 +7,25 @@ function normalizeTile(t) {
     return t;
 }
 
+const KOKUSHI_TILES = new Set(['m1', 'm9', 'p1', 'p9', 's1', 's9', 'z1', 'z2', 'z3', 'z4', 'z5', 'z6', 'z7']);
+
+/**
+ * Checks if a hand is Kokushi Musou (Thirteen Orphans).
+ * @param {string[]} handTiles Normalized tile array (suit+rank format, e.g. 'm1')
+ * @returns {{ isKokushi: boolean, tiles: string[] } | null}
+ */
+function isKokushiMusou(handTiles) {
+    if (handTiles.length !== 14) return null;
+    const counts = {};
+    for (const t of handTiles) counts[t] = (counts[t] || 0) + 1;
+    // Must have all 13 different kokushi tiles
+    for (const t of KOKUSHI_TILES) {
+        if (!counts[t]) return null;
+    }
+    // The 14th tile is a duplicate of one of the 13
+    return { isKokushi: true, tiles: handTiles };
+}
+
 /**
  * Parses a 14-18 tile hand array and returns all valid combinations of Melds (Sets) and a Pair.
  * @param {string[]} handTiles Array of tiles (e.g., ['m1', 'm2', 'm3', ...] or ['1m', '2m', ...])
@@ -17,6 +36,15 @@ function parseHand(handTiles, kans = []) {
     if (handTiles.length < 14 || handTiles.length > 18) return [];
 
     const normHand = handTiles.map(normalizeTile);
+
+    // Check Kokushi Musou first (only for 14-tile standard hands with no kans)
+    if (kans.length === 0 && normHand.length === 14) {
+        const kokushi = isKokushiMusou(normHand);
+        if (kokushi) {
+            return [[{ type: 'kokushi', tiles: normHand }]];
+        }
+    }
+
     const tileCounts = {};
     for (const tile of normHand) {
         tileCounts[tile] = (tileCounts[tile] || 0) + 1;

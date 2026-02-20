@@ -93,7 +93,8 @@ function calculateScore(isOya, isTsumo, han, fu) {
     let isFixed = false;
     let baseRef = 0;
 
-    if (han >= 13) { isFixed = true; baseRef = 8000; } // 役満
+    if (han >= 26) { isFixed = true; baseRef = 16000; } // ダブル役満
+    else if (han >= 13) { isFixed = true; baseRef = 8000; } // 役満
     else if (han >= 11) { isFixed = true; baseRef = 6000; } // 三倍満
     else if (han >= 8) { isFixed = true; baseRef = 4000; } // 倍満
     else if (han >= 6) { isFixed = true; baseRef = 3000; } // 跳満

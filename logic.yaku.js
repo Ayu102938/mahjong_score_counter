@@ -276,6 +276,96 @@ function evaluateYaku(combination, winTile, options) {
         yakuList.push({ name: '地和', han: 13, isMenzenOnly: true, kuisaGari: false });
     }
 
+    // ================================================================
+    // YAKUMAN DETECTION
+    // ================================================================
+
+    // Suuankou (四暗刻) - All four groups are concealed triplets
+    if (!isChiitoitsu && !options.isNaki) {
+        const ankoMelds4 = combination.filter(m =>
+            m.type === 'koutsu' || (m.type === 'kantsu' && m.kanType !== 'minkan')
+        );
+        if (ankoMelds4.length === 4) {
+            yakuList.push({ name: '四暗刻', han: 13, isMenzenOnly: false, kuisaGari: false });
+        }
+    }
+
+    // Daisangen (大三元) - All three dragons as triplets
+    const dragonMelds3 = combination.filter(
+        m => (m.type === 'koutsu' || m.type === 'kantsu') && ['z5', 'z6', 'z7'].includes(m.tiles[0])
+    );
+    if (dragonMelds3.length === 3) {
+        yakuList.push({ name: '大三元', han: 13, isMenzenOnly: false, kuisaGari: false });
+    }
+
+    // Tsuuiisou (字一色) - All Honors
+    const allJihai = combination.every(meld => meld.tiles.every(t => t.charAt(0) === 'z'));
+    if (allJihai) {
+        yakuList.push({ name: '字一色', han: 13, isMenzenOnly: false, kuisaGari: false });
+    }
+
+    // Chinroutou (清老頭) - All Terminals (only 1 and 9, no honors)
+    const allTerminals = combination.every(meld => meld.tiles.every(t => {
+        const suit = t.charAt(0);
+        const rank = parseInt(t.charAt(1), 10);
+        return suit !== 'z' && (rank === 1 || rank === 9);
+    }));
+    if (allTerminals && !allJihai) {
+        yakuList.push({ name: '清老頭', han: 13, isMenzenOnly: false, kuisaGari: false });
+    }
+
+    // Ryuuiisou (緑一色) - All Green (s2,s3,s4,s6,s8 + z6 Hatsu only)
+    const greenSet = new Set(['s2', 's3', 's4', 's6', 's8', 'z6']);
+    const allGreen = combination.every(meld => meld.tiles.every(t => greenSet.has(t)));
+    if (allGreen) {
+        yakuList.push({ name: '緑一色', han: 13, isMenzenOnly: false, kuisaGari: false });
+    }
+
+    // Kokushi Musou (国士無双) - detected via special combo type from parser
+    if (combination.length === 1 && combination[0].type === 'kokushi') {
+        yakuList.push({ name: '国士無双', han: 13, isMenzenOnly: true, kuisaGari: false });
+    }
+
+    // Shousushi / Daisushi (wind yakuman)
+    const windSet = ['z1', 'z2', 'z3', 'z4'];
+    const windTripletCount = combination.filter(
+        m => (m.type === 'koutsu' || m.type === 'kantsu') && windSet.includes(m.tiles[0])
+    ).length;
+    const windPairExists = combination.some(
+        m => m.type === 'toitsu' && windSet.includes(m.tiles[0])
+    );
+    if (windTripletCount === 4) {
+        yakuList.push({ name: '大四喜', han: 26, isMenzenOnly: false, kuisaGari: false }); // Double yakuman
+    } else if (windTripletCount === 3 && windPairExists) {
+        yakuList.push({ name: '小四喜', han: 13, isMenzenOnly: false, kuisaGari: false });
+    }
+
+    // Chuurenpoutou (九蓮宝燈) - Nine Gates
+    if (isMenzen && !isChiitoitsu) {
+        let cSuit = null; let cOnly = true;
+        const cRanks = [];
+        combination.forEach(meld => meld.tiles.forEach(tile => {
+            const s = tile.charAt(0);
+            if (s === 'z') { cOnly = false; return; }
+            if (!cSuit) cSuit = s; else if (s !== cSuit) cOnly = false;
+            cRanks.push(parseInt(tile.charAt(1), 10));
+        }));
+        if (cOnly && cSuit) {
+            const sorted = cRanks.sort((a, b) => a - b);
+            const required = [1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9];
+            const rem = [...sorted];
+            let ok = true;
+            for (const r of required) {
+                const idx = rem.indexOf(r);
+                if (idx === -1) { ok = false; break; }
+                rem.splice(idx, 1);
+            }
+            if (ok && rem.length === 1) {
+                yakuList.push({ name: '九蓮宝燈', han: 13, isMenzenOnly: true, kuisaGari: false });
+            }
+        }
+    }
+
     return yakuList;
 }
 

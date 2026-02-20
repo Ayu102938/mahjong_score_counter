@@ -252,6 +252,97 @@ function runTests() {
         assert.strictEqual(result.some(y => y.name === '小三元'), true);
     });
 
+    // === YAKUMAN TESTS ===
+
+    test('evaluateYaku: Suuankou (四暗刻)', () => {
+        const combo = [
+            { type: 'koutsu', tiles: ['m1', 'm1', 'm1'] },
+            { type: 'koutsu', tiles: ['p5', 'p5', 'p5'] },
+            { type: 'koutsu', tiles: ['s9', 's9', 's9'] },
+            { type: 'koutsu', tiles: ['z7', 'z7', 'z7'] },
+            { type: 'toitsu', tiles: ['m9', 'm9'] }
+        ];
+        const result = evaluateYaku(combo, 'm9', { isTsumo: true, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '四暗刻'), true);
+        assert.strictEqual(result.find(y => y.name === '四暗刻').han, 13);
+    });
+
+    test('evaluateYaku: Daisangen (大三元)', () => {
+        const combo = [
+            { type: 'koutsu', tiles: ['z5', 'z5', 'z5'] }, // Haku
+            { type: 'koutsu', tiles: ['z6', 'z6', 'z6'] }, // Hatsu
+            { type: 'koutsu', tiles: ['z7', 'z7', 'z7'] }, // Chun
+            { type: 'shuntsu', tiles: ['m1', 'm2', 'm3'] },
+            { type: 'toitsu', tiles: ['p9', 'p9'] }
+        ];
+        const result = evaluateYaku(combo, 'm1', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '大三元'), true);
+        assert.strictEqual(result.find(y => y.name === '大三元').han, 13);
+    });
+
+    test('evaluateYaku: Tsuuiisou (字一色)', () => {
+        const combo = [
+            { type: 'koutsu', tiles: ['z1', 'z1', 'z1'] },
+            { type: 'koutsu', tiles: ['z2', 'z2', 'z2'] },
+            { type: 'koutsu', tiles: ['z5', 'z5', 'z5'] },
+            { type: 'koutsu', tiles: ['z6', 'z6', 'z6'] },
+            { type: 'toitsu', tiles: ['z7', 'z7'] }
+        ];
+        const result = evaluateYaku(combo, 'z1', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '字一色'), true);
+        assert.strictEqual(result.find(y => y.name === '字一色').han, 13);
+    });
+
+    test('evaluateYaku: Chinroutou (清老頭)', () => {
+        const combo = [
+            { type: 'koutsu', tiles: ['m1', 'm1', 'm1'] },
+            { type: 'koutsu', tiles: ['m9', 'm9', 'm9'] },
+            { type: 'koutsu', tiles: ['p1', 'p1', 'p1'] },
+            { type: 'koutsu', tiles: ['p9', 'p9', 'p9'] },
+            { type: 'toitsu', tiles: ['s1', 's1'] }
+        ];
+        const result = evaluateYaku(combo, 'm1', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '清老頭'), true);
+    });
+
+    test('evaluateYaku: Ryuuiisou (緑一色)', () => {
+        const combo = [
+            { type: 'shuntsu', tiles: ['s2', 's3', 's4'] },
+            { type: 'shuntsu', tiles: ['s2', 's3', 's4'] },
+            { type: 'koutsu', tiles: ['s6', 's6', 's6'] },
+            { type: 'koutsu', tiles: ['z6', 'z6', 'z6'] }, // Hatsu (green)
+            { type: 'toitsu', tiles: ['s8', 's8'] }
+        ];
+        const result = evaluateYaku(combo, 's2', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '緑一色'), true);
+    });
+
+    test('evaluateYaku: Shousushi (小四喀)', () => {
+        const windTiles = ['z1', 'z2', 'z3', 'z4'];
+        const combo = [
+            { type: 'koutsu', tiles: ['z1', 'z1', 'z1'] }, // East
+            { type: 'koutsu', tiles: ['z2', 'z2', 'z2'] }, // South
+            { type: 'koutsu', tiles: ['z3', 'z3', 'z3'] }, // West
+            { type: 'shuntsu', tiles: ['m1', 'm2', 'm3'] },
+            { type: 'toitsu', tiles: ['z4', 'z4'] }         // North as pair
+        ];
+        const result = evaluateYaku(combo, 'm1', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '小四喜'), true);
+    });
+
+    test('evaluateYaku: Daisushi (大四喜, double yakuman)', () => {
+        const combo = [
+            { type: 'koutsu', tiles: ['z1', 'z1', 'z1'] },
+            { type: 'koutsu', tiles: ['z2', 'z2', 'z2'] },
+            { type: 'koutsu', tiles: ['z3', 'z3', 'z3'] },
+            { type: 'koutsu', tiles: ['z4', 'z4', 'z4'] },
+            { type: 'toitsu', tiles: ['m1', 'm1'] }
+        ];
+        const result = evaluateYaku(combo, 'm1', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '大四喜'), true);
+        assert.strictEqual(result.find(y => y.name === '大四喜').han, 26);
+    });
+
     console.log(`\nTest Summary: ${passed} passed, ${failed} failed`);
     if (failed > 0) process.exit(1);
 }

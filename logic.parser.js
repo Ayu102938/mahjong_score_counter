@@ -167,6 +167,6 @@ function parseHand(handTiles, kans = []) {
     return results;
 }
 
-module.exports = {
-    parseHand
-};
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { parseHand };
+}

@@ -244,6 +244,16 @@ function performCalculation() {
     const isRiichi = document.getElementById('opt-riichi').checked;
     const isIppatsu = document.getElementById('opt-ippatsu').checked;
     const isDoubleRiichi = document.getElementById('opt-double-riichi').checked;
+    const isRinshan = document.getElementById('opt-rinshan').checked;
+    const isChankan = document.getElementById('opt-chankan').checked;
+    const haiteiEl = document.getElementById('opt-haitei');
+    const isHaitei = haiteiEl.checked && isTsumo;
+    const isHoutei = haiteiEl.checked && !isTsumo;
+    const tenhouEl = document.getElementById('opt-tenhou');
+    const isTenhou = tenhouEl.checked && isOya && isTsumo;
+    const isChiihou = tenhouEl.checked && !isOya && isTsumo;
+    const oyaKaze = document.getElementById('select-bakaze').value;
+    const jikaze = document.getElementById('select-jikaze').value;
 
     const currentMaxHandSize = MAX_BASE_HAND_SIZE + kanCount;
 
@@ -269,7 +279,15 @@ function performCalculation() {
         doraCount: doraCount,
         isRiichi: isRiichi,
         isIppatsu: isIppatsu,
-        isDoubleRiichi: isDoubleRiichi
+        isDoubleRiichi: isDoubleRiichi,
+        isRinshan: isRinshan,
+        isChankan: isChankan,
+        isHaitei: isHaitei,
+        isHoutei: isHoutei,
+        isTenhou: isTenhou,
+        isChiihou: isChiihou,
+        oyaKaze: oyaKaze,
+        jikaze: jikaze
     };
 
     try {
@@ -296,6 +314,10 @@ function displayResult(result, isOya, isTsumo) {
     const finalScoreDisplay = document.getElementById('final-score');
     const hanFuDisplay = document.getElementById('han-fu-display');
     const detailDisplay = document.getElementById('detail-display');
+    const yakuListDisplay = document.getElementById('yaku-list-display');
+
+    // Clear previous yaku chips
+    yakuListDisplay.innerHTML = '';
 
     if (!result || result.han === 0 || result.score.main === 0) {
         finalScoreDisplay.textContent = "0";
@@ -327,6 +349,17 @@ function displayResult(result, isOya, isTsumo) {
     } else {
         finalScoreDisplay.textContent = result.score.main.toLocaleString();
         detailDisplay.textContent = `${isOya ? '親' : '子'}のロンあがり`;
+    }
+
+    // Render yaku chips
+    if (result.yaku && result.yaku.length > 0) {
+        const isYakuman = result.han >= 13;
+        result.yaku.forEach(yakuName => {
+            const chip = document.createElement('span');
+            chip.className = 'yaku-tag' + (isYakuman ? ' yakuman' : '');
+            chip.textContent = yakuName;
+            yakuListDisplay.appendChild(chip);
+        });
     }
 
     resultContainer.classList.remove('hidden');

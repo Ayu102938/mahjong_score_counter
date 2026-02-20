@@ -13,7 +13,7 @@
     <div class="container">
         <header>
             <h1>麻雀点数計算</h1>
-            <p class="subtitle">30符固定（一部例外あり）の簡易計算ツール</p>
+            <p class="subtitle">手牌を選ぶだけ。役を自動判定して得点を計算します。</p>
         </header>
 
         <main class="calculator-card glassmorphism">
@@ -52,16 +52,49 @@
                     </div>
                 </div>
 
-                <!-- 状況役 -->
+                <!-- 風 -->
                 <div class="form-group row-group">
+                    <label>風</label>
+                    <div class="radio-group" style="gap: 12px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <label for="select-bakaze" style="white-space:nowrap; font-size:0.85em;">場風</label>
+                            <select id="select-bakaze" class="wind-select">
+                                <option value="東">東</option>
+                                <option value="南">南</option>
+                                <option value="西">西</option>
+                                <option value="北">北</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <label for="select-jikaze" style="white-space:nowrap; font-size:0.85em;">自風</label>
+                            <select id="select-jikaze" class="wind-select">
+                                <option value="東">東</option>
+                                <option value="南">南</option>
+                                <option value="西">西</option>
+                                <option value="北">北</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 状況役 -->
+                <div class="form-group row-group" id="situational-yaku-group">
                     <label>状況役</label>
-                    <div class="radio-group" style="gap: 10px; flex-wrap: wrap;">
-                        <label style="display:flex; align-items:center; cursor:pointer;"><input type="checkbox"
-                                id="opt-riichi" style="margin-right:4px;">リーチ</label>
-                        <label style="display:flex; align-items:center; cursor:pointer;"><input type="checkbox"
-                                id="opt-ippatsu" style="margin-right:4px;">一発</label>
-                        <label style="display:flex; align-items:center; cursor:pointer;"><input type="checkbox"
-                                id="opt-double-riichi" style="margin-right:4px;">Wリーチ</label>
+                    <div class="yaku-checkbox-group">
+                        <label class="yaku-chip" for="opt-riichi"><input type="checkbox"
+                                id="opt-riichi"><span>リーチ</span></label>
+                        <label class="yaku-chip" for="opt-ippatsu"><input type="checkbox"
+                                id="opt-ippatsu"><span>一発</span></label>
+                        <label class="yaku-chip" for="opt-double-riichi"><input type="checkbox"
+                                id="opt-double-riichi"><span>Wリーチ</span></label>
+                        <label class="yaku-chip" for="opt-rinshan"><input type="checkbox"
+                                id="opt-rinshan"><span>嶺上開花</span></label>
+                        <label class="yaku-chip" for="opt-chankan"><input type="checkbox"
+                                id="opt-chankan"><span>槍槓</span></label>
+                        <label class="yaku-chip" for="opt-haitei"><input type="checkbox"
+                                id="opt-haitei"><span>海底/河底</span></label>
+                        <label class="yaku-chip" for="opt-tenhou"><input type="checkbox"
+                                id="opt-tenhou"><span>天和/地和</span></label>
                     </div>
                 </div>
 
@@ -113,8 +146,13 @@
                 <p id="han-fu-display">--翻 --符</p>
                 <p id="detail-display">-----</p>
             </div>
+            <div class="yaku-list-display" id="yaku-list-display">
+                <!-- Yaku chips will be inserted here by script.js -->
+            </div>
         </section>
     </div>
+    <script src="logic.parser.js"></script>
+    <script src="logic.yaku.js"></script>
     <script src="logic.js"></script>
     <script src="script.js"></script>
 </body>

@@ -496,3 +496,78 @@ h1 {
     font-size: 1.1rem;
     color: var(--text-primary);
 }
+
+/* Situational Yaku Checkbox Chips */
+.yaku-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.yaku-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    user-select: none;
+    color: var(--text-secondary);
+}
+
+.yaku-chip input[type="checkbox"] {
+    display: none;
+}
+
+.yaku-chip:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.yaku-chip:has(input:checked) {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
+}
+
+.yaku-chip:has(input:disabled) {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Yaku List in Result Section */
+.yaku-list-display {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.yaku-list-display:empty {
+    display: none;
+}
+
+.yaku-tag {
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: var(--accent-color);
+    letter-spacing: 0.02em;
+}
+
+.yaku-tag.yakuman {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}

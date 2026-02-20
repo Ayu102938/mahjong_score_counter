@@ -165,6 +165,93 @@ function runTests() {
         assert.strictEqual(resSuukantsu.some(y => y.name === '三槓子'), false);
     });
 
+    test('evaluateYaku: Iipeikou and Ryanpeikou', () => {
+        // Iipeikou: two identical shuntsu (menzen only)
+        const iiCombo = [
+            { type: 'shuntsu', tiles: ['m2', 'm3', 'm4'] },
+            { type: 'shuntsu', tiles: ['m2', 'm3', 'm4'] },
+            { type: 'shuntsu', tiles: ['p6', 'p7', 'p8'] },
+            { type: 'koutsu', tiles: ['s9', 's9', 's9'] },
+            { type: 'toitsu', tiles: ['z1', 'z1'] }
+        ];
+        const resIi = evaluateYaku(iiCombo, 'm2', { isTsumo: false, isNaki: false });
+        assert.strictEqual(resIi.some(y => y.name === '一盃口'), true);
+
+        // Ryanpeikou: two pairs of identical shuntsu
+        const ryanCombo = [
+            { type: 'shuntsu', tiles: ['m2', 'm3', 'm4'] },
+            { type: 'shuntsu', tiles: ['m2', 'm3', 'm4'] },
+            { type: 'shuntsu', tiles: ['p6', 'p7', 'p8'] },
+            { type: 'shuntsu', tiles: ['p6', 'p7', 'p8'] },
+            { type: 'toitsu', tiles: ['s9', 's9'] }
+        ];
+        const resRyan = evaluateYaku(ryanCombo, 'm2', { isTsumo: false, isNaki: false });
+        assert.strictEqual(resRyan.some(y => y.name === '二盃口'), true);
+        // Ryanpeikou should NOT also have Iipeikou
+        assert.strictEqual(resRyan.some(y => y.name === '一盃口'), false);
+    });
+
+    test('evaluateYaku: Toitoi (All Triplets)', () => {
+        const combo = [
+            { type: 'koutsu', tiles: ['m1', 'm1', 'm1'] },
+            { type: 'koutsu', tiles: ['m9', 'm9', 'm9'] },
+            { type: 'koutsu', tiles: ['p5', 'p5', 'p5'] },
+            { type: 'koutsu', tiles: ['s7', 's7', 's7'] },
+            { type: 'toitsu', tiles: ['z1', 'z1'] }
+        ];
+        const result = evaluateYaku(combo, 'm1', { isTsumo: false, isNaki: true });
+        assert.strictEqual(result.some(y => y.name === '対々和'), true);
+    });
+
+    test('evaluateYaku: Sanankou (Three Concealed Triplets)', () => {
+        // 3 koutsu formed without naki, 1 shuntsu
+        const combo = [
+            { type: 'koutsu', tiles: ['m1', 'm1', 'm1'] },
+            { type: 'koutsu', tiles: ['p5', 'p5', 'p5'] },
+            { type: 'koutsu', tiles: ['s9', 's9', 's9'] },
+            { type: 'shuntsu', tiles: ['m7', 'm8', 'm9'] },
+            { type: 'toitsu', tiles: ['z7', 'z7'] }
+        ];
+        const result = evaluateYaku(combo, 'm7', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '三暗刻'), true);
+    });
+
+    test('evaluateYaku: Chanta (Half Terminals/Honors)', () => {
+        const combo = [
+            { type: 'shuntsu', tiles: ['m1', 'm2', 'm3'] },
+            { type: 'shuntsu', tiles: ['p7', 'p8', 'p9'] },
+            { type: 'koutsu', tiles: ['s1', 's1', 's1'] },
+            { type: 'koutsu', tiles: ['z1', 'z1', 'z1'] },
+            { type: 'toitsu', tiles: ['m9', 'm9'] }
+        ];
+        const result = evaluateYaku(combo, 'm3', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === 'チャンタ'), true);
+    });
+
+    test('evaluateYaku: Sanshoku Doukou (Three Color Triplets)', () => {
+        const combo = [
+            { type: 'koutsu', tiles: ['m5', 'm5', 'm5'] },
+            { type: 'koutsu', tiles: ['p5', 'p5', 'p5'] },
+            { type: 'koutsu', tiles: ['s5', 's5', 's5'] },
+            { type: 'shuntsu', tiles: ['m1', 'm2', 'm3'] },
+            { type: 'toitsu', tiles: ['z7', 'z7'] }
+        ];
+        const result = evaluateYaku(combo, 'm5', { isTsumo: false, isNaki: true });
+        assert.strictEqual(result.some(y => y.name === '三色同刻'), true);
+    });
+
+    test('evaluateYaku: Shosangen (Small Three Dragons)', () => {
+        const combo = [
+            { type: 'koutsu', tiles: ['z5', 'z5', 'z5'] }, // Haku
+            { type: 'koutsu', tiles: ['z6', 'z6', 'z6'] }, // Hatsu
+            { type: 'shuntsu', tiles: ['m1', 'm2', 'm3'] },
+            { type: 'shuntsu', tiles: ['p4', 'p5', 'p6'] },
+            { type: 'toitsu', tiles: ['z7', 'z7'] }  // Chun as pair
+        ];
+        const result = evaluateYaku(combo, 'm1', { isTsumo: false, isNaki: false });
+        assert.strictEqual(result.some(y => y.name === '小三元'), true);
+    });
+
     console.log(`\nTest Summary: ${passed} passed, ${failed} failed`);
     if (failed > 0) process.exit(1);
 }

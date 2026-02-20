@@ -29,10 +29,15 @@ function calculateMahjongScore(payload) {
         isRiichi: payload.isRiichi || false,
         isIppatsu: payload.isIppatsu || false,
         isDoubleRiichi: payload.isDoubleRiichi || false,
-        // Assuming some defaults for features not yet in UI
-        isRyamen: true,
-        oyaKaze: '東',
-        jikaze: payload.isOya ? '東' : '南'
+        isRinshan: payload.isRinshan || false,
+        isChankan: payload.isChankan || false,
+        isHaitei: payload.isHaitei || false,
+        isHoutei: payload.isHoutei || false,
+        isTenhou: payload.isTenhou || false,
+        isChiihou: payload.isChiihou || false,
+        isRyamen: true, // Simplified: assume ryamen wait
+        oyaKaze: payload.oyaKaze || '東',
+        jikaze: payload.jikaze || (payload.isOya ? '東' : '南')
     };
 
     // The winning tile is generally the last tile added, or we can just pick the last tile in the hand array
@@ -60,8 +65,10 @@ function calculateMahjongScore(payload) {
 // -------------------------------------------------------------
 // Auto-Yaku Detector Integration
 // -------------------------------------------------------------
-const parser = require('./logic.parser');
-const yakuEngine = require('./logic.yaku');
+// In browser, logic.parser.js and logic.yaku.js are loaded via <script> tags before this file.
+// In Node.js (testing), we use require().
+const parser = (typeof require !== 'undefined') ? require('./logic.parser') : { parseHand };
+const yakuEngine = (typeof require !== 'undefined') ? require('./logic.yaku') : { evaluateYaku };
 
 function calculateHan(yakuDataList, isNaki, doraCount) {
     let totalHan = 0;

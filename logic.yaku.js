@@ -122,6 +122,106 @@ function evaluateYaku(combination, winTile, options) {
         }
     }
 
+    // Iipeikou (Two Identical Sequences) and Ryanpeikou (Two Pairs of Identical Sequences)
+    if (isMenzen && !isChiitoitsu) {
+        const shuntsuKeys = combination
+            .filter(m => m.type === 'shuntsu')
+            .map(m => m.tiles[0]); // Use the first tile as the key, e.g. 'm2'
+        const duplicateCounts = {};
+        shuntsuKeys.forEach(k => duplicateCounts[k] = (duplicateCounts[k] || 0) + 1);
+        const pairs = Object.values(duplicateCounts).filter(c => c >= 2).length;
+        if (pairs >= 2) {
+            yakuList.push({ name: '二盃口', han: 3, isMenzenOnly: true, kuisaGari: false });
+        } else if (pairs === 1) {
+            yakuList.push({ name: '一盃口', han: 1, isMenzenOnly: true, kuisaGari: false });
+        }
+    }
+
+    // Toitoi (All Triplets)
+    const tripletMelds = combination.filter(m => m.type === 'koutsu' || m.type === 'kantsu');
+    if (tripletMelds.length === 4) {
+        yakuList.push({ name: '対々和', han: 2, isMenzenOnly: false, kuisaGari: false });
+    }
+
+    // Sanankou (Three Concealed Triplets)
+    // Triplets that are formed without naki (anko), includes kantsu of type ankan
+    if (!isChiitoitsu) {
+        const ankoCount = combination.filter(m =>
+            (m.type === 'koutsu' || (m.type === 'kantsu' && m.kanType !== 'minkan'))
+        ).length;
+        if (ankoCount >= 3 && !options.isNaki) {
+            yakuList.push({ name: '三暗刻', han: 2, isMenzenOnly: false, kuisaGari: false });
+        }
+    }
+
+    // Chanta (Half Terminals/Honors - every meld contains a terminal or honor)
+    // Every group has at least one 1/9/jihai tile
+    const isTerminalOrHonor = tile => {
+        const suit = tile.charAt(0);
+        const rank = parseInt(tile.charAt(1), 10);
+        return suit === 'z' || rank === 1 || rank === 9;
+    };
+    const hasShuntsu = combination.some(m => m.type === 'shuntsu');
+    const allGroupsHaveTerminal = combination.every(meld =>
+        meld.tiles.some(isTerminalOrHonor)
+    );
+    if (allGroupsHaveTerminal && hasShuntsu) {
+        // Check if Junchan (no honors) or Chanta (with honors)
+        const hasHonors = combination.some(meld => meld.tiles.some(t => t.charAt(0) === 'z'));
+        if (!hasHonors) {
+            yakuList.push({ name: '純チャン', han: 3, isMenzenOnly: false, kuisaGari: true });
+        } else {
+            yakuList.push({ name: 'チャンタ', han: 2, isMenzenOnly: false, kuisaGari: true });
+        }
+    }
+
+    // Honroutou (All Terminals and Honors)
+    // Every tile in every set must be a terminal (1 or 9) or honor (字牌)
+    const isHonroutou = combination.every(meld =>
+        meld.tiles.every(tile => {
+            const suit = tile.charAt(0);
+            const rank = parseInt(tile.charAt(1), 10);
+            return suit === 'z' || rank === 1 || rank === 9;
+        })
+    ) && !hasShuntsu;
+    if (isHonroutou) {
+        yakuList.push({ name: '混老頭', han: 2, isMenzenOnly: false, kuisaGari: false });
+    }
+
+    // Sanshoku Doukou (Three Color Triplets)
+    const koutsuList = combination.filter(m => m.type === 'koutsu' || m.type === 'kantsu');
+    if (koutsuList.length >= 3) {
+        const koutsuRankMap = {};
+        koutsuList.forEach(m => {
+            const tile = m.tiles[0];
+            const suit = tile.charAt(0);
+            const rank = tile.charAt(1);
+            if (suit !== 'z') {
+                if (!koutsuRankMap[rank]) koutsuRankMap[rank] = new Set();
+                koutsuRankMap[rank].add(suit);
+            }
+        });
+        for (const rank in koutsuRankMap) {
+            if (koutsuRankMap[rank].size === 3) {
+                yakuList.push({ name: '三色同刻', han: 2, isMenzenOnly: false, kuisaGari: false });
+                break;
+            }
+        }
+    }
+
+    // Shosangen (Small Three Dragons)
+    // Two dragon triplets + one dragon pair
+    const dragonTiles = ['z5', 'z6', 'z7'];
+    const dragonTriplets = combination.filter(
+        m => (m.type === 'koutsu' || m.type === 'kantsu') && dragonTiles.includes(m.tiles[0])
+    ).length;
+    const dragonPair = combination.some(
+        m => m.type === 'toitsu' && dragonTiles.includes(m.tiles[0])
+    );
+    if (dragonTriplets === 2 && dragonPair) {
+        yakuList.push({ name: '小三元', han: 2, isMenzenOnly: false, kuisaGari: false });
+    }
+
     // Honitsu (Half Flush) & Chinitsu (Full Flush)
     let hasManzu = false;
     let hasPinzu = false;
@@ -156,9 +256,29 @@ function evaluateYaku(combination, winTile, options) {
         yakuList.push({ name: '四槓子', han: 13, isMenzenOnly: false, kuisaGari: false }); // treated as yakuman
     }
 
+    // Situational Yaku passed via options
+    if (options.isRinshan && options.isTsumo) {
+        yakuList.push({ name: '嶺上開花', han: 1, isMenzenOnly: false, kuisaGari: false });
+    }
+    if (options.isChankan && !options.isTsumo) {
+        yakuList.push({ name: '槍槓', han: 1, isMenzenOnly: false, kuisaGari: false });
+    }
+    if (options.isHaitei && options.isTsumo) {
+        yakuList.push({ name: '海底摸月', han: 1, isMenzenOnly: false, kuisaGari: false });
+    }
+    if (options.isHoutei && !options.isTsumo) {
+        yakuList.push({ name: '河底撈魚', han: 1, isMenzenOnly: false, kuisaGari: false });
+    }
+    if (options.isTenhou && options.isTsumo && isMenzen) {
+        yakuList.push({ name: '天和', han: 13, isMenzenOnly: true, kuisaGari: false });
+    }
+    if (options.isChiihou && options.isTsumo && isMenzen) {
+        yakuList.push({ name: '地和', han: 13, isMenzenOnly: true, kuisaGari: false });
+    }
+
     return yakuList;
 }
 
-module.exports = {
-    evaluateYaku
-};
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { evaluateYaku };
+}

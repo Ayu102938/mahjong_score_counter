@@ -200,6 +200,18 @@ function attachEventListeners() {
     clearBtn.addEventListener('click', () => {
         currentHand = [];
         kanCount = 0;
+        // Clear situational yaku checkboxes
+        ['opt-riichi', 'opt-ippatsu', 'opt-double-riichi', 'opt-rinshan', 'opt-chankan', 'opt-haitei', 'opt-tenhou'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.checked = false; el.disabled = false; }
+        });
+        // Reset wind selects
+        const bakaze = document.getElementById('select-bakaze');
+        const jikaze = document.getElementById('select-jikaze');
+        if (bakaze) bakaze.value = '東';
+        if (jikaze) jikaze.value = '東';
+        // Reset dora
+        document.getElementById('dora-count').value = '0';
         updateHandDisplay();
     });
 

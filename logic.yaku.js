@@ -14,6 +14,12 @@ function evaluateYaku(combination, winTile, options) {
     const hasMinkan = combination.some(m => m.kanType === 'minkan');
     const isMenzen = !options.isNaki && !hasMinkan;
 
+    // Kokushi Musou is a special form - skip ALL standard yaku evaluation
+    if (combination.length === 1 && combination[0].type === 'kokushi') {
+        yakuList.push({ name: '国士無双', han: 13, isMenzenOnly: true, kuisaGari: false });
+        return yakuList;
+    }
+
     // Basic Menzen Tsumo
     if (options.isTsumo && isMenzen) {
         yakuList.push({ name: '門前清自摸和', han: 1, isMenzenOnly: true, kuisaGari: false });
@@ -177,7 +183,9 @@ function evaluateYaku(combination, winTile, options) {
 
     // Honroutou (All Terminals and Honors)
     // Every tile in every set must be a terminal (1 or 9) or honor (字牌)
-    const isHonroutou = combination.every(meld =>
+    // Not applicable to Kokushi Musou (handled separately as Yakuman)
+    const isKokushiCombo = combination.length === 1 && combination[0].type === 'kokushi';
+    const isHonroutou = !isKokushiCombo && combination.every(meld =>
         meld.tiles.every(tile => {
             const suit = tile.charAt(0);
             const rank = parseInt(tile.charAt(1), 10);

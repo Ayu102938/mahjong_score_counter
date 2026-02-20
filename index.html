@@ -63,11 +63,22 @@
                 </div>
             </div>
 
-            <!-- 役の選択 -->
-            <div class="yaku-section">
-                <h3>役の選択</h3>
-                <div id="yaku-container">
-                    <!-- JavaScript will dynamically populate this container -->
+            <!-- 手牌の構成 -->
+            <div class="hand-builder-section">
+                <div class="hand-header">
+                    <h3>手牌</h3>
+                    <span id="hand-count" class="hand-count-badge">0 / 14</span>
+                </div>
+                <div class="hand-container" id="hand-container">
+                    <!-- JavaScript will dynamically populate 14 slots -->
+                </div>
+
+                <div class="picker-header">
+                    <h3 class="picker-title">牌を選ぶ</h3>
+                    <button type="button" id="clear-hand-btn" class="secondary-btn">クリア</button>
+                </div>
+                <div class="tile-picker" id="tile-picker">
+                    <!-- JavaScript will populate rows of Manzu, Pinzu, Souzu, Jihai -->
                 </div>
             </div>
 

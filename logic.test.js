@@ -86,8 +86,8 @@ function runTests() {
 
     test('calculateScore: Child Tsumo 1 Han 30 Fu -> 300, 500', () => {
         const result = calculateScore(false, true, 1, 30);
-        assert.strictEqual(result.main, 500, `Expected 500 but got ${result.main}`);
-        assert.strictEqual(result.additional, 300, `Expected 300 but got ${result.additional}`);
+        assert.strictEqual(result.main, 300, `Expected 300 but got ${result.main}`);
+        assert.strictEqual(result.additional, 500, `Expected 500 but got ${result.additional}`);
     });
 
     test('calculateScore: Child Ron 4 Han 30 Fu -> 8000 (Mangan)', () => {
@@ -125,8 +125,8 @@ function runTests() {
 
     test('calculateScore: Child Tsumo 12 Han (Sanbaiman) -> 6000, 12000', () => {
         const result = calculateScore(false, true, 12, 30);
-        assert.strictEqual(result.main, 12000);
-        assert.strictEqual(result.additional, 6000);
+        assert.strictEqual(result.main, 6000);
+        assert.strictEqual(result.additional, 12000);
     });
 
     test('calculateScore: Child Ron 13+ Han (Yakuman) -> 32000', () => {

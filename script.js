@@ -1,124 +1,146 @@
-// script.js - UI Interaction and Event Handling
+// script.js - Hand Builder UI Interaction and Event Handling
 
-// Use logic.js functions assuming they are loaded in global scope or accessible
+// Define tiles for the picker
+const TILES = {
+    manzu: ['1m', '2m', '3m', '4m', '5m', '6m', '7m', '8m', '9m'],
+    pinzu: ['1p', '2p', '3p', '4p', '5p', '6p', '7p', '8p', '9p'],
+    souzu: ['1s', '2s', '3s', '4s', '5s', '6s', '7s', '8s', '9s'],
+    jihai: ['1z', '2z', '3z', '4z', '5z', '6z', '7z']
+};
 
-const yakuData = [
-    { name: 'リーチ', han: 1, isMenzenOnly: true, kuisaGari: false, category: '1翻' },
-    { name: '一発', han: 1, isMenzenOnly: true, kuisaGari: false, category: '1翻' },
-    { name: '門前清自摸和', han: 1, isMenzenOnly: true, kuisaGari: false, category: '1翻' },
-    { name: '断幺九', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
-    { name: '平和', han: 1, isMenzenOnly: true, kuisaGari: false, category: '1翻' },
-    { name: '一盃口', han: 1, isMenzenOnly: true, kuisaGari: false, category: '1翻' },
-    { name: '役牌（白）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
-    { name: '役牌（發）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
-    { name: '役牌（中）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
-    { name: '役牌（自風）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
-    { name: '役牌（場風）', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
-    { name: '嶺上開花', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
-    { name: '槍槓', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
-    { name: '海底摸月・河底撈魚', han: 1, isMenzenOnly: false, kuisaGari: false, category: '1翻' },
+const TILE_SYMBOLS = {
+    '1m': '一', '2m': '二', '3m': '三', '4m': '四', '5m': '五', '6m': '六', '7m': '七', '8m': '八', '9m': '九',
+    '1p': '①', '2p': '②', '3p': '③', '4p': '④', '5p': '⑤', '6p': '⑥', '7p': '⑦', '8p': '⑧', '9p': '⑨',
+    '1s': '1', '2s': '2', '3s': '3', '4s': '4', '5s': '5', '6s': '6', '7s': '7', '8s': '8', '9s': '9',
+    '1z': '東', '2z': '南', '3z': '西', '4z': '北', '5z': '白', '6z': '發', '7z': '中'
+};
 
-    { name: '三色同順', han: 2, isMenzenOnly: false, kuisaGari: true, category: '2翻' },
-    { name: '一気通貫', han: 2, isMenzenOnly: false, kuisaGari: true, category: '2翻' },
-    { name: 'チャンタ', han: 2, isMenzenOnly: false, kuisaGari: true, category: '2翻' },
-    { name: '七対子', han: 2, isMenzenOnly: true, kuisaGari: false, category: '2翻' },
-    { name: '対々和', han: 2, isMenzenOnly: false, kuisaGari: false, category: '2翻' },
-    { name: '三暗刻', han: 2, isMenzenOnly: false, kuisaGari: false, category: '2翻' },
-    { name: '三色同刻', han: 2, isMenzenOnly: false, kuisaGari: false, category: '2翻' },
-    { name: '三槓子', han: 2, isMenzenOnly: false, kuisaGari: false, category: '2翻' },
-    { name: '小三元', han: 2, isMenzenOnly: false, kuisaGari: false, category: '2翻' },
-    { name: '混老頭', han: 2, isMenzenOnly: false, kuisaGari: false, category: '2翻' },
-    { name: 'ダブルリーチ', han: 2, isMenzenOnly: true, kuisaGari: false, category: '2翻' },
+const SUIT_CHARS = {
+    'm': '萬', 'p': '筒', 's': '索', 'z': ''
+};
 
-    { name: '混一色', han: 3, isMenzenOnly: false, kuisaGari: true, category: '3翻' },
-    { name: '純チャン', han: 3, isMenzenOnly: false, kuisaGari: true, category: '3翻' },
-    { name: '二盃口', han: 3, isMenzenOnly: true, kuisaGari: false, category: '3翻' },
-
-    { name: '清一色', han: 6, isMenzenOnly: false, kuisaGari: true, category: '6翻' },
-
-    { name: '役満', han: 13, isMenzenOnly: false, kuisaGari: false, category: '役満' }
-];
+const MAX_HAND_SIZE = 14;
+let currentHand = []; // Array of tile IDs (e.g. ['1m', '2p', '1z'])
 
 document.addEventListener('DOMContentLoaded', () => {
-    initUI();
+    initHandBuilderUI();
     attachEventListeners();
-    updateYakuStatus();
+    updateHandDisplay();
 });
 
-function initUI() {
-    const container = document.getElementById('yaku-container');
-    container.innerHTML = ''; // clear existing
+function initHandBuilderUI() {
+    const tilePicker = document.getElementById('tile-picker');
+    tilePicker.innerHTML = '';
 
-    const categories = ['1翻', '2翻', '3翻', '6翻', '役満'];
+    // Create rows for each suit
+    Object.entries(TILES).forEach(([suitName, tiles]) => {
+        const row = document.createElement('div');
+        row.className = 'suit-row';
 
-    categories.forEach(category => {
-        const catYaku = yakuData.filter(y => y.category === category);
-        if (catYaku.length === 0) return;
-
-        const catDiv = document.createElement('div');
-        catDiv.className = 'yaku-category';
-
-        const title = document.createElement('div');
-        title.className = 'yaku-category-title';
-        title.textContent = category;
-        catDiv.appendChild(title);
-
-        const grid = document.createElement('div');
-        grid.className = 'yaku-grid';
-
-        catYaku.forEach(yaku => {
-            const index = yakuData.indexOf(yaku);
-            const label = document.createElement('label');
-            label.className = 'yaku-item';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.value = index;
-            checkbox.className = 'yaku-checkbox';
-
-            const span = document.createElement('span');
-            span.textContent = yaku.name;
-
-            if (yaku.isMenzenOnly) {
-                const tag = document.createElement('span');
-                tag.className = 'tag menzen-tag';
-                tag.textContent = '門前のみ';
-                tag.style.marginLeft = '8px';
-                tag.style.fontSize = '0.7em';
-                span.appendChild(tag);
-            }
-            if (yaku.kuisaGari) {
-                const tag = document.createElement('span');
-                tag.className = 'tag kuisa-tag';
-                tag.textContent = '食下り';
-                tag.style.marginLeft = '8px';
-                tag.style.fontSize = '0.7em';
-                span.appendChild(tag);
-            }
-
-            label.appendChild(checkbox);
-            label.appendChild(span);
-            grid.appendChild(label);
+        tiles.forEach(tileId => {
+            const tileEl = createTileElement(tileId, suitName);
+            // Click to add to hand
+            tileEl.addEventListener('click', () => addTileToHand(tileId));
+            row.appendChild(tileEl);
         });
 
-        catDiv.appendChild(grid);
-        container.appendChild(catDiv);
+        tilePicker.appendChild(row);
     });
+}
+
+function createTileElement(tileId, suitName) {
+    const el = document.createElement('div');
+    el.className = `tile ${suitName}`;
+    el.dataset.id = tileId;
+
+    const symbol = TILE_SYMBOLS[tileId];
+    const suitType = tileId.charAt(1);
+
+    el.innerHTML = `
+        <span>${symbol}</span>
+        ${suitName !== 'jihai' ? `<span class="suit-char">${SUIT_CHARS[suitType]}</span>` : ''}
+    `;
+    return el;
+}
+
+function addTileToHand(tileId) {
+    // A specific identical tile can only exist 4 times in mahjong
+    const countInHand = currentHand.filter(t => t === tileId).length;
+    if (countInHand >= 4) {
+        alert("同じ牌は4枚までしか選べません。");
+        return;
+    }
+
+    if (currentHand.length < MAX_HAND_SIZE) {
+        currentHand.push(tileId);
+        // Sort hand for better UX: Manzu -> Pinzu -> Souzu -> Jihai, then by number
+        currentHand.sort((a, b) => {
+            const suitOrder = { 'm': 1, 'p': 2, 's': 3, 'z': 4 };
+            const orderA = suitOrder[a[1]] * 100 + parseInt(a[0]);
+            const orderB = suitOrder[b[1]] * 100 + parseInt(b[0]);
+            return orderA - orderB;
+        });
+        updateHandDisplay();
+    } else {
+        alert("手牌は最大14枚までです。");
+    }
+}
+
+function removeTileFromHand(index) {
+    currentHand.splice(index, 1);
+    updateHandDisplay();
+}
+
+function updateHandDisplay() {
+    const handContainer = document.getElementById('hand-container');
+    const handCount = document.getElementById('hand-count');
+
+    handContainer.innerHTML = '';
+
+    // Render current tiles
+    currentHand.forEach((tileId, index) => {
+        const suitType = tileId.charAt(1);
+        const suitName = suitType === 'm' ? 'manzu' : suitType === 'p' ? 'pinzu' : suitType === 's' ? 'souzu' : 'jihai';
+
+        const slotEl = document.createElement('div');
+        slotEl.className = 'hand-slot filled';
+
+        const tileEl = createTileElement(tileId, suitName);
+        // Click to remove
+        tileEl.addEventListener('click', () => removeTileFromHand(index));
+
+        slotEl.appendChild(tileEl);
+        handContainer.appendChild(slotEl);
+    });
+
+    // Render empty slots
+    const emptySlots = MAX_HAND_SIZE - currentHand.length;
+    for (let i = 0; i < emptySlots; i++) {
+        const slotEl = document.createElement('div');
+        slotEl.className = 'hand-slot';
+        handContainer.appendChild(slotEl);
+    }
+
+    handCount.textContent = `${currentHand.length} / ${MAX_HAND_SIZE}`;
+
+    if (currentHand.length === MAX_HAND_SIZE) {
+        handCount.style.color = 'var(--accent-color)';
+    } else {
+        handCount.style.color = 'var(--accent-gold)';
+    }
 }
 
 function attachEventListeners() {
     const btnCalculate = document.getElementById('calculate-btn');
-    const nakiToggle = document.getElementById('naki-toggle');
+    const clearBtn = document.getElementById('clear-hand-btn');
     const doraMinus = document.getElementById('dora-minus');
     const doraPlus = document.getElementById('dora-plus');
     const doraCount = document.getElementById('dora-count');
 
-    nakiToggle.addEventListener('change', () => {
-        updateYakuStatus();
+    clearBtn.addEventListener('click', () => {
+        currentHand = [];
+        updateHandDisplay();
     });
-
-    const winRadios = document.querySelectorAll('input[name="win_method"]');
-    winRadios.forEach(r => r.addEventListener('change', updateYakuStatus));
 
     doraMinus.addEventListener('click', () => {
         let val = parseInt(doraCount.value);
@@ -133,99 +155,82 @@ function attachEventListeners() {
     btnCalculate.addEventListener('click', performCalculation);
 }
 
-function updateYakuStatus() {
-    const isNaki = document.getElementById('naki-toggle').checked;
-    const winMethod = document.querySelector('input[name="win_method"]:checked').value;
-
-    document.querySelectorAll('.yaku-checkbox').forEach(cb => {
-        const yaku = yakuData[cb.value];
-        const label = cb.parentElement;
-
-        let disabled = false;
-
-        if (isNaki && yaku.isMenzenOnly) {
-            disabled = true;
-        }
-
-        // Prevent 'Menzen Tsumo' if Ron or Naki
-        if (yaku.name === '門前清自摸和') {
-            if (winMethod === 'ron' || isNaki) {
-                disabled = true;
-                cb.checked = false; // Ensure it's unchecked if disabled
-            } else {
-                // Auto-check Menzen Tsumo if Tsumo and Menzen (not Naki)
-                cb.checked = true;
-            }
-        }
-
-        if (disabled) {
-            cb.disabled = true;
-            label.classList.add('disabled-yaku');
-        } else {
-            cb.disabled = false;
-            label.classList.remove('disabled-yaku');
-        }
-    });
-}
-
 function performCalculation() {
     const isOya = document.getElementById('role-oya').checked;
     const isTsumo = document.getElementById('win-tsumo').checked;
     const isNaki = document.getElementById('naki-toggle').checked;
     const doraCount = parseInt(document.getElementById('dora-count').value);
 
-    const selectedYaku = [];
-    document.querySelectorAll('.yaku-checkbox:checked').forEach(cb => {
-        selectedYaku.push(yakuData[cb.value]);
-    });
-
-    if (selectedYaku.length === 0) {
-        alert("役を選択してください。");
+    if (currentHand.length !== 14) {
+        alert("手牌を14枚（和了牌含む）完成させてください。");
         return;
     }
 
-    // Call logic.js (must be included before script.js)
-    const han = calculateHan(selectedYaku, isNaki, doraCount);
-    const fu = calculateFu(selectedYaku, isNaki, isTsumo);
-    const score = calculateScore(isOya, isTsumo, han, fu);
+    // Call logic.js to determine yaku and score
+    // Prepare payload
+    const payload = {
+        hand: currentHand,
+        isOya: isOya,
+        isTsumo: isTsumo,
+        isNaki: isNaki,
+        doraCount: doraCount
+    };
 
-    displayResult(han, fu, score, isOya, isTsumo);
+    try {
+        if (typeof calculateMahjongScore === 'function') {
+            const result = calculateMahjongScore(payload);
+            displayResult(result, isOya, isTsumo);
+        } else {
+            console.error("calculateMahjongScore function not found in logic.js");
+            // Fallback display if logic.js is not fully implemented yet
+            displayResult({
+                han: 0,
+                fu: 0,
+                score: { main: 0, additional: 0 },
+                yaku: []
+            }, isOya, isTsumo);
+        }
+    } catch (e) {
+        console.error("Error during calculation", e);
+        alert("計算中にエラーが発生しました。");
+    }
 }
 
-function displayResult(han, fu, score, isOya, isTsumo) {
+function displayResult(result, isOya, isTsumo) {
     const resultContainer = document.getElementById('result-container');
     const finalScoreDisplay = document.getElementById('final-score');
     const hanFuDisplay = document.getElementById('han-fu-display');
     const detailDisplay = document.getElementById('detail-display');
 
-    if (han === 0 || score.main === 0) {
+    if (!result || result.han === 0 || result.score.main === 0) {
         finalScoreDisplay.textContent = "0";
-        hanFuDisplay.textContent = "役がありません";
-        detailDisplay.textContent = "エラー";
+        hanFuDisplay.textContent = "役がありません（または判定未実装）";
+        detailDisplay.textContent = "条件を満たしていません";
         resultContainer.classList.remove('hidden');
+        resultContainer.classList.add('active');
         return;
     }
 
     let scoreTitle = "";
-    if (han >= 13) scoreTitle = "役満";
-    else if (han >= 11) scoreTitle = "三倍満";
-    else if (han >= 8) scoreTitle = "倍満";
-    else if (han >= 6) scoreTitle = "跳満";
-    else if (han >= 5 || (han === 4 && fu === 30)) scoreTitle = "満貫";
+    if (result.han >= 13) scoreTitle = "役満";
+    else if (result.han >= 11) scoreTitle = "三倍満";
+    else if (result.han >= 8) scoreTitle = "倍満";
+    else if (result.han >= 6) scoreTitle = "跳満";
+    else if (result.han >= 5 || (result.han === 4 && result.fu === 30)) scoreTitle = "満貫";
 
     const titleStr = scoreTitle ? ` (${scoreTitle})` : '';
-    hanFuDisplay.textContent = `${han}翻 ${fu}符${titleStr}`;
+    hanFuDisplay.textContent = `${result.han}翻 ${result.fu}符${titleStr}`;
 
     if (isTsumo) {
         if (isOya) {
-            finalScoreDisplay.textContent = `${score.main.toLocaleString()} ALL`;
+            finalScoreDisplay.textContent = `${result.score.main.toLocaleString()} ALL`;
             detailDisplay.textContent = `親のツモあがり`;
         } else {
-            finalScoreDisplay.textContent = `${score.main.toLocaleString()} / ${score.additional.toLocaleString()}`;
-            detailDisplay.textContent = `子のツモあがり (親払い ${score.additional.toLocaleString()}点 / 子払い ${score.main.toLocaleString()}点)`;
+            finalScoreDisplay.textContent = `${result.score.main.toLocaleString()} / ${result.score.additional.toLocaleString()}`;
+            detailDisplay.textContent = `子のツモあがり (親払い ${result.score.additional.toLocaleString()}点 / 子払い ${result.score.main.toLocaleString()}点)`;
         }
     } else {
-        finalScoreDisplay.textContent = score.main.toLocaleString();
+        finalScoreDisplay.textContent = result.score.main.toLocaleString();
         detailDisplay.textContent = `${isOya ? '親' : '子'}のロンあがり`;
     }
 

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻雀点数計算機</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>麻雀点数計算</h1>
+            <p class="subtitle">30符固定（一部例外あり）の簡易計算ツール</p>
+        </header>
+
+        <main class="calculator-card glassmorphism">
+            <div class="input-section">
+                <!-- 立場選択 -->
+                <div class="form-group row-group">
+                    <label>立場</label>
+                    <div class="radio-group">
+                        <input type="radio" id="role-oya" name="role" value="oya" checked>
+                        <label for="role-oya" class="radio-label">親</label>
+                        <input type="radio" id="role-ko" name="role" value="ko">
+                        <label for="role-ko" class="radio-label">子</label>
+                    </div>
+                </div>
+
+                <!-- あがり方選択 -->
+                <div class="form-group row-group">
+                    <label>あがり方</label>
+                    <div class="radio-group">
+                        <input type="radio" id="win-tsumo" name="win_method" value="tsumo" checked>
+                        <label for="win-tsumo" class="radio-label">ツモ</label>
+                        <input type="radio" id="win-ron" name="win_method" value="ron">
+                        <label for="win-ron" class="radio-label">ロン</label>
+                    </div>
+                </div>
+
+                <!-- 鳴きの有無 -->
+                <div class="form-group row-group">
+                    <label>鳴き</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="naki-toggle">
+                        <label for="naki-toggle" class="toggle-label">
+                            <span class="toggle-inner"></span>
+                        </label>
+                        <span class="toggle-text">鳴きあり</span>
+                    </div>
+                </div>
+
+                <!-- ドラ入力 -->
+                <div class="form-group row-group dora-group">
+                    <label>ドラ（裏・赤含む）</label>
+                    <div class="counter-input">
+                        <button type="button" class="counter-btn minus-btn" id="dora-minus">-</button>
+                        <input type="number" id="dora-count" value="0" min="0" max="13" readonly>
+                        <button type="button" class="counter-btn plus-btn" id="dora-plus">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 役の選択 -->
+            <div class="yaku-section">
+                <h3>役の選択</h3>
+                <div id="yaku-container">
+                    <!-- JavaScript will dynamically populate this container -->
+                </div>
+            </div>
+
+            <div class="action-section">
+                <button type="button" id="calculate-btn" class="primary-btn">点数を計算する</button>
+            </div>
+        </main>
+
+        <section class="result-section glassmorphism hidden" id="result-container">
+            <h2>計算結果</h2>
+            <div class="score-display">
+                <span id="final-score" class="score-value">--</span>
+                <span class="score-unit">点</span>
+            </div>
+            <div class="score-breakdown">
+                <p id="han-fu-display">--翻 --符</p>
+                <p id="detail-display">-----</p>
+            </div>
+        </section>
+    </div>
+    <script src="logic.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
